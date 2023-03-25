@@ -1,0 +1,67 @@
+-- Question 1: Which songs have the most Invoices?
+SELECT t.Name, COUNT(*) Invoices
+FROM Invoice i
+JOIN InvoiceLine il
+ON i.InvoiceId = il.InvoiceId
+JOIN Track t
+ON il.TrackId = t.TrackId
+GROUP BY 1
+ORDER BY 2 DESC, 1
+LIMIT 10;
+
+-- Querstion 2: Who Are The Top Spending Customers?
+SELECT c.FirstName ||' '|| c.LastName CustomerName, SUM(i.total) purchases
+FROM Customer c
+JOIN Invoice i
+ON c.CustomerId = i.CustomerId
+GROUP BY 1
+ORDER BY 2 DESC
+LIMIT 10;
+
+-- Question 3: Who Is Writing The Rock Music?
+SELECT ar.ArtistId, ar.Name, COUNT(*) Songs
+FROM Artist ar
+JOIN Album al
+ON ar.ArtistId = al.ArtistId
+JOIN Track t
+ON al.AlbumId = t.AlbumId
+JOIN Genre g
+ON t.GenreId = g.GenreId AND g.Name = 'Rock'
+GROUP BY 1, 2
+ORDER BY 3 DESC 
+LIMIT 10;
+
+-- Question 4: Who Are The Most Spending Customers for The Most Earning Artist?
+WITH t1 AS (SELECT ar.Name, SUM(il.quantity * il.UnitPrice) AmountSpent
+              FROM Invoice i
+              JOIN InvoiceLine il
+              ON i.InvoiceId = il.InvoiceId
+              JOIN Track t
+              ON il.TrackId = t.TrackId
+              JOIN Customer c
+              ON c.CustomerId = i.CustomerId
+              JOIN Album al
+              ON al.AlbumId = t.AlbumId
+              JOIN Artist ar
+              ON ar.ArtistId = al.ArtistId
+              GROUP BY 1
+              ORDER BY 2 DESC
+              LIMIT 1)
+
+SELECT DISTINCT ar.Name, c.FirstName ||' '|| c.LastName CustomerName, c.CustomerId, SUM(il.quantity * il.UnitPrice) AmountSpent
+FROM Invoice i
+JOIN InvoiceLine il
+ON i.InvoiceId = il.InvoiceId
+JOIN Track t
+ON il.TrackId = t.TrackId
+JOIN Customer c
+ON c.CustomerId = i.CustomerId
+JOIN Album al
+ON al.AlbumId = t.AlbumId
+JOIN Artist ar
+ON ar.ArtistId = al.ArtistId
+WHERE ar.Name = (SELECT t1.Name
+                 FROM t1)
+GROUP BY 1, 2, 3
+ORDER BY 4 DESC
+LIMIT 10;
